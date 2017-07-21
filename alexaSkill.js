@@ -17,33 +17,11 @@ const handlers = {
     'LaunchRequest': function () {
         // this.emit('GetFact');
     },
-    'WhoseTurn': function () {
-        //get order of people
-        //get current index
-        //say name of person
-        console.log(this);
-        this.emit('GetFact');
-    },
-    'GetOrder': function () {
-        const userId = this.event.session.user.userId;
-        var params = {
-            TableName : "Person",
-            KeyConditionExpression: "#id = :ID",
-            ExpressionAttributeNames:{
-                "#id": "UserId"
-            },
-            ExpressionAttributeValues: {
-                ":ID": userId
-            }
-        };
-    },
-    'GetCurrentPerson': function (startDate, order) {
-        var today = new Date();
-        var diffMillis = today - startDate;
-        var diffDays = Math.floor(diffMillis/86400000);
-        var luckyIndex = diffDays % order.length;
-        var luckyPerson = order[luckyIndex];
-        return luckyPerson;
+    'WhoseTurn': function (choreName) {
+        var startDate = getChoreStartDate(choreName);
+        var order = getOrderDefault();
+        var luckyPersonName = getLuckyPerson(startDate, order);
+        this.emit(':tell', luckyPersonName);
     },
     'AMAZON.HelpIntent': function () {
         const speechOutput = this.t('HELP_MESSAGE');
@@ -64,3 +42,51 @@ exports.handler = function (event, context) {
     alexa.registerHandlers(handlers);
     alexa.execute();
 };
+
+function getChoreStartDate(choreName){
+    const userId = this.event.session.user.userId;
+    var params = {
+        TableName : "Chore",
+        Key: {
+            "UserId": userId,
+            "Name": choreName
+        }
+    };
+    docClient.get(params, function(err, data) {
+        if(err){
+            console.error("Error getting chore:",
+                JSON.stringify(err, null, 2));
+        } else {
+            return data.StartDate;
+        }
+    });
+}
+function getOrderDefault(){
+    const userId = this.event.session.user.userId;
+    var params = {
+        TableName : "Person",
+        KeyConditionExpression: "#id = :ID",
+        ExpressionAttributeNames:{
+            "#id": "UserId"
+        },
+        ExpressionAttributeValues: {
+            ":ID": userId
+        }
+    };
+    docClient.query(params, function(err, data) {
+        if(err){
+            console.error("Error getting order of people for chore:",
+                JSON.stringify(err, null, 2));
+        } else {
+            return data;
+        }
+    });
+}
+function getLuckyPerson(startDate, order) {
+    var today = new Date();
+    var diffMillis = today - startDate;
+    var diffDays = Math.floor(diffMillis/86400000);
+    var luckyIndex = diffDays % order.length;
+    var luckyPerson = order[luckyIndex];
+    return luckyPerson;
+}
