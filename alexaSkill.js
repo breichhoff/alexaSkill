@@ -10,7 +10,8 @@
 
 'use strict';
 const Alexa = require('alexa-sdk');
-const APP_ID = undefined;  // TODO replace with your app ID (OPTIONAL).
+const APP_ID = undefined;
+var docClient = new AWS.DynamoDB.DocumentClient();
 
 const handlers = {
     'LaunchRequest': function () {
@@ -23,8 +24,18 @@ const handlers = {
         console.log(this);
         this.emit('GetFact');
     },
-    'GetOrder': function (userId) {
-        //
+    'GetOrder': function () {
+        const userId = this.event.session.user.userId;
+        var params = {
+            TableName : "Person",
+            KeyConditionExpression: "#id = :ID",
+            ExpressionAttributeNames:{
+                "#id": "UserId"
+            },
+            ExpressionAttributeValues: {
+                ":ID": userId
+            }
+        };
     },
     'GetCurrentPerson': function (startDate, order) {
         var today = new Date();
@@ -50,8 +61,6 @@ const handlers = {
 exports.handler = function (event, context) {
     const alexa = Alexa.handler(event, context);
     alexa.APP_ID = APP_ID;
-    // To enable string internationalization (i18n) features, set a resources object.
-    alexa.resources = languageStrings;
     alexa.registerHandlers(handlers);
     alexa.execute();
 };
