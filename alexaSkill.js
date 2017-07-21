@@ -23,16 +23,16 @@ const handlers = {
         console.log(this);
         this.emit('GetFact');
     },
-    'GetFact': function () {
-        // Get a random space fact from the space facts list
-        // Use this.t() to get corresponding language data
-        const factArr = this.t('FACTS');
-        const factIndex = Math.floor(Math.random() * factArr.length);
-        const randomFact = factArr[factIndex];
-
-        // Create speech output
-        const speechOutput = this.t('GET_FACT_MESSAGE') + randomFact;
-        this.emit(':tellWithCard', speechOutput, this.t('SKILL_NAME'), randomFact);
+    'GetOrder': function (userId) {
+        //
+    },
+    'GetCurrentPerson': function (startDate, order) {
+        var today = new Date();
+        var diffMillis = today - startDate;
+        var diffDays = Math.floor(diffMillis/86400000);
+        var luckyIndex = diffDays % order.length;
+        var luckyPerson = order[luckyIndex];
+        return luckyPerson;
     },
     'AMAZON.HelpIntent': function () {
         const speechOutput = this.t('HELP_MESSAGE');
